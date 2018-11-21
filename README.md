@@ -1,2 +1,2 @@
-# dempster_algorithm
+# Dempster algorithm
 Prototype for Dempster algorithm.

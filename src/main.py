@@ -1,11 +1,13 @@
 import copy
 from typing import Set, Tuple
+from math import log, pi
 
 import numpy as np
 
 
 def l(sigma: np.ndarray) -> float:
-    ...
+    p = sigma.shape[0]
+    return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
 
 
 def get_sigma(ind: Tuple[int, int], s: np.ndarray, a: Set[Tuple[int, int]]) -> float:
@@ -71,7 +73,6 @@ def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, p: int, s: np.ndarray
 
 
 def main():
-    n = int(input())
     p = int(input())
     s = np.zeros(shape=(p, p))
     for i in range(p):

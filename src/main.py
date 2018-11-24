@@ -39,7 +39,7 @@ def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, s: np.ndarray) -> np.
     indices = list(a)
 
     theta = np.asarray([-s[i, j] if i != j else -1 / 2 * s[i, j] for i, j in indices])
-    print(theta)
+    # print(theta)
 
     gamma = np.ndarray(shape=(len(a), len(a)), dtype=float)
 
@@ -56,21 +56,21 @@ def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, s: np.ndarray) -> np.
         for j, e2 in enumerate(indices):
             gamma[i, j] = get_gamma(e1, e2, sigma)
 
-    print(gamma)
-    print(np.linalg.inv(gamma))
+    #print(gamma)
+    #print(np.linalg.inv(gamma))
 
     delta = float('inf')
     eps = 0.0001
     while delta > eps:
         fa0 = np.asarray([inv_sigma[i, j] for i, j in indices])
         theta0 = np.asarray([-sigma[i, j] if i != j else -1 / 2 * sigma[i, j] for i, j in indices])
-        print('theta0', theta0)
-        print('fa0', fa0)
+        # print('theta0', theta0)
+        #print('fa0', fa0)
 
         s = np.linalg.solve(gamma, (theta - theta0))
-        print((theta - theta0))
+        #print(theta - theta0)
         new_fa = fa0 - s
-        print('new_fa', new_fa)
+        #print('new_fa', new_fa)
 
         inv_sigma = np.zeros(shape=(p, p))
         for ind, e in enumerate(indices):
@@ -110,6 +110,7 @@ def main():
 
     g1 = float('inf')
     l0 = l(sigma)
+    print(l0)
     while g1 >= alpha:
         g0 = 0
         best_edge = None
@@ -118,16 +119,17 @@ def main():
                 if (i, j) in a:
                     continue
                 a1 = copy.deepcopy(a)
-                # a1.add((i, j))
-                a1.add((3, 4))
+                a1.add((i, j))
+                # a1.add((3, 4))
                 new_sigma = calc_sigma(a1, sigma, s)
-                print(new_sigma)
-                return
                 l1 = l(new_sigma)
+                print(new_sigma)
+                print(l1)
                 g1 = l1 - l0
                 if g1 > g0:
                     best_edge = (i, j)
                     g0 = g1
+        print(best_edge)
         if best_edge is None:
             break
 

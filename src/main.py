@@ -30,6 +30,7 @@ def get_gamma(ind1: Tuple[int, int], ind2: Tuple[int, int], sig: np.ndarray):
 
 
 def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, p: int, s: np.ndarray) -> np.ndarray:
+    inv_sigma = np.linalg.inv(sigma)
     indices = list(a)
 
     theta = np.asarray([-s[i, j] if i != j else -1 / 2 * s[i, j] for i, j in indices])
@@ -52,7 +53,7 @@ def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, p: int, s: np.ndarray
     delta = float('inf')
     eps = 0.0001
     while delta > eps:
-        fa0 = np.asarray([sigma[i, j] for i, j in indices])
+        fa0 = np.asarray([inv_sigma[i, j] for i, j in indices])
         theta0 = np.asarray([-sigma[i, j] if i != j else -1 / 2 * sigma[i, j] for i, j in indices])
 
         s = np.linalg.solve(gamma, (theta - theta0))

@@ -2,6 +2,7 @@ import copy
 from typing import Set, Tuple
 from math import log, pi
 
+import pandas as pd
 import numpy as np
 
 
@@ -31,7 +32,9 @@ def get_gamma(ind1: Tuple[int, int], ind2: Tuple[int, int], sig: np.ndarray):
             return -1 / 2 * sig[i, k] ** 2
 
 
-def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, p: int, s: np.ndarray) -> np.ndarray:
+def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, s: np.ndarray) -> np.ndarray:
+    p = s.shape[0]
+
     inv_sigma = np.linalg.inv(sigma)
     indices = list(a)
 
@@ -73,12 +76,22 @@ def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, p: int, s: np.ndarray
 
 
 def main():
+    s = pd.read_csv('../TestData/DempsterExample/data.csv',
+                       dtype={i: float for i in range(6)},
+                       delimiter=';',
+                       names=[i for i in range(6)],
+                       skipinitialspace=True)
+    s = s.values
+    print(s)
+    p = 6
+    '''
     p = int(input())
     s = np.zeros(shape=(p, p))
     for i in range(p):
         cur = list(map(float, input().split()))
         for j in range(p):
             s[i, j] = cur[j]
+        '''
 
     alpha = 0.05
 
@@ -98,7 +111,7 @@ def main():
                     continue
                 a1 = copy.deepcopy(a)
                 a1.add((i, j))
-                new_sigma = calc_sigma(a1)
+                new_sigma = calc_sigma(a1, sigma, s)
                 l1 = l(new_sigma)
                 g1 = l1 - l0
                 if g1 > g0:
@@ -108,7 +121,7 @@ def main():
             break
 
         a.add(best_edge)
-        sigma = calc_sigma(a)
+        sigma = calc_sigma(a, sigma, s)
 
         l1 = l(sigma)
         g1 = l1 - l0

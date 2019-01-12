@@ -8,6 +8,12 @@ import numpy as np
 
 def calc_likelihood(sigma: np.ndarray) -> float:
     p = sigma.shape[0]
+
+    # sigma = copy.deepcopy(sigma)
+    # for i in range(p):
+    #     for j in range(i):
+    #         sigma[i, j] = sigma[j, i]
+
     return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
 
 
@@ -52,6 +58,8 @@ def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.n
         fa0 = np.asarray([inv_sigma[i, j] for i, j in indices])
         theta0 = np.asarray([-sigma[i, j] if i != j else -1 / 2 * sigma[i, j] for i, j in indices])
 
+        # print(gamma)
+        # print((theta - theta0))
         s = np.linalg.solve(gamma, (theta - theta0))
         new_fa = fa0 - s
 
@@ -59,6 +67,7 @@ def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.n
         for ind, e in enumerate(indices):
             i, j = e
             inv_sigma[i, j] = new_fa[ind]
+            inv_sigma[j, i] = new_fa[ind]
 
         sigma = np.linalg.inv(inv_sigma)
 
@@ -69,15 +78,15 @@ def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.n
 
 def main():
     correlation_matrix = pd.read_csv('../TestData/DempsterExample/data.csv',
-                       dtype={i: float for i in range(6)},
-                       delimiter=';',
-                       names=[i for i in range(6)],
-                       skipinitialspace=True)
+                                     dtype={i: float for i in range(6)},
+                                     delimiter=';',
+                                     names=[i for i in range(6)],
+                                     skipinitialspace=True)
     correlation_matrix = correlation_matrix.values
     p = correlation_matrix.shape[0]
     for i in range(p):
         for j in range(i):
-            correlation_matrix[i, j] = 0
+            correlation_matrix[i, j] = correlation_matrix[j, i]
     print(correlation_matrix)
     '''
     p = int(input())
@@ -88,7 +97,7 @@ def main():
             s[i, j] = cur[j]
         '''
 
-    alpha = 0.05
+    alpha = 0.03
 
     corr_estimation = np.identity(p)
     processed = set()
@@ -97,7 +106,6 @@ def main():
 
     cur_delta = float('inf')
     base_likelihood = calc_likelihood(corr_estimation)
-    print(base_likelihood)
     while cur_delta >= alpha:
         max_delta = 0
         best_edge = None
@@ -105,18 +113,17 @@ def main():
             for j in range(i, p):
                 if (i, j) in processed:
                     continue
-                    
+
                 cur_processed = copy.deepcopy(processed)
                 cur_processed.add((i, j))
                 new_corr_estimation = calc_next_estimation(cur_processed, corr_estimation, correlation_matrix)
                 cur_likelihood = calc_likelihood(new_corr_estimation)
-                print(new_corr_estimation)
-                print(cur_likelihood)
-                cur_delta = cur_likelihood - base_likelihood
+                cur_delta = abs(cur_likelihood - base_likelihood)
+                # if i == 3 and j == 4:
+                print(cur_delta)
                 if cur_delta > max_delta:
                     best_edge = (i, j)
                     max_delta = cur_delta
-        print(best_edge)
         if best_edge is None:
             break
 
@@ -124,12 +131,20 @@ def main():
         corr_estimation = calc_next_estimation(processed, corr_estimation, correlation_matrix)
 
         cur_likelihood = calc_likelihood(corr_estimation)
-        cur_delta = cur_likelihood - base_likelihood
+        cur_delta = abs(cur_likelihood - base_likelihood)
         base_likelihood = cur_likelihood
 
     print(processed)
+    print(corr_estimation)
+    for i in range(p):
+        for j in range(i):
+            corr_estimation[i, j] = corr_estimation[j, i]
+    inverted = np.linalg.inv(corr_estimation)
+    for i in inverted:
+        for j in i:
+            print('%.4f' % j, end=' ')
+        print()
 
 
 if __name__ == '__main__':
     main()
-

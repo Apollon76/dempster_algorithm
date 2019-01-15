@@ -51,15 +51,15 @@ def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.n
 
     theta = np.asarray([-s[i, j] if i != j else -1 / 2 * s[i, j] for i, j in indices])
 
-    gamma = np.ndarray(shape=(len(edges), len(edges)), dtype=float)
-
-    for i, e1 in enumerate(indices):
-        for j, e2 in enumerate(indices):
-            gamma[i, j] = get_gamma(e1, e2, sigma)
-
     delta = float('inf')
     eps = 0.0001
     while delta > eps:
+        gamma = np.ndarray(shape=(len(edges), len(edges)), dtype=float)
+
+        for i, e1 in enumerate(indices):
+            for j, e2 in enumerate(indices):
+                gamma[i, j] = get_gamma(e1, e2, sigma)
+
         fa0 = np.asarray([inv_sigma[i, j] for i, j in indices])
         theta0 = np.asarray([-sigma[i, j] if i != j else -1 / 2 * sigma[i, j] for i, j in indices])
 
@@ -102,7 +102,7 @@ def main():
             s[i, j] = cur[j]
         '''
 
-    alpha = 0.05
+    alpha = 0.5
 
     corr_estimation = np.identity(p)
     processed = set()
@@ -128,13 +128,14 @@ def main():
                 cur_likelihood = calc_likelihood(new_corr_estimation)
                 cur_delta = cur_likelihood - base_likelihood
                 # if i == 3 and j == 4:
-                print(cur_delta)
+                # print(cur_delta)
                 if cur_delta > max_delta:
                     best_edge = (i, j)
                     max_delta = cur_delta
         if best_edge is None:
             break
 
+        print(best_edge)
         processed.add(best_edge)
         corr_estimation = calc_next_estimation(processed, corr_estimation, correlation_matrix)
 

@@ -6,9 +6,20 @@ import pandas as pd
 import numpy as np
 
 
-def l(sigma: np.ndarray) -> float:
+def calc_likelihood(sigma: np.ndarray) -> float:
     p = sigma.shape[0]
-    return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
+
+    # sigma = copy.deepcopy(sigma)
+    # for i in range(p):
+    #     for j in range(i):
+    #         sigma[i, j] = sigma[j, i]
+
+    try:
+        return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
+    except ValueError:
+        print(log(np.linalg.det(sigma)))
+        print(sigma)
+        raise
 
 
 def get_sigma(ind: Tuple[int, int], s: np.ndarray, a: Set[Tuple[int, int]]) -> float:
@@ -32,66 +43,56 @@ def get_gamma(ind1: Tuple[int, int], ind2: Tuple[int, int], sig: np.ndarray):
             return -1 / 2 * sig[i, k] ** 2
 
 
-def calc_sigma(a: Set[Tuple[int, int]], sigma: np.ndarray, s: np.ndarray) -> np.ndarray:
+def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.ndarray) -> np.ndarray:
     p = s.shape[0]
 
     inv_sigma = np.linalg.inv(sigma)
-    indices = list(a)
+    indices = list(edges)
 
     theta = np.asarray([-s[i, j] if i != j else -1 / 2 * s[i, j] for i, j in indices])
-    # print(theta)
-
-    gamma = np.ndarray(shape=(len(a), len(a)), dtype=float)
-
-    '''
-    partial_s = s.copy()
-    for i in range(p):
-        for j in range(p):
-            if (i, j) in a:
-                continue
-            partial_s[i, j] = 0
-            '''
-
-    for i, e1 in enumerate(indices):
-        for j, e2 in enumerate(indices):
-            gamma[i, j] = get_gamma(e1, e2, sigma)
-
-    #print(gamma)
-    #print(np.linalg.inv(gamma))
 
     delta = float('inf')
     eps = 0.0001
     while delta > eps:
+        gamma = np.ndarray(shape=(len(edges), len(edges)), dtype=float)
+
+        for i, e1 in enumerate(indices):
+            for j, e2 in enumerate(indices):
+                gamma[i, j] = get_gamma(e1, e2, sigma)
+
         fa0 = np.asarray([inv_sigma[i, j] for i, j in indices])
         theta0 = np.asarray([-sigma[i, j] if i != j else -1 / 2 * sigma[i, j] for i, j in indices])
-        # print('theta0', theta0)
-        #print('fa0', fa0)
 
+        # print(gamma)
+        # print((theta - theta0))
         s = np.linalg.solve(gamma, (theta - theta0))
-        #print(theta - theta0)
         new_fa = fa0 - s
-        #print('new_fa', new_fa)
 
         inv_sigma = np.zeros(shape=(p, p))
         for ind, e in enumerate(indices):
             i, j = e
             inv_sigma[i, j] = new_fa[ind]
+            inv_sigma[j, i] = new_fa[ind]
 
         sigma = np.linalg.inv(inv_sigma)
 
         delta = np.dot(new_fa, new_fa) - np.dot(fa0, fa0)
+
     return sigma
 
 
 def main():
-    s = pd.read_csv('../TestData/DempsterExample/data.csv',
-                       dtype={i: float for i in range(6)},
-                       delimiter=';',
-                       names=[i for i in range(6)],
-                       skipinitialspace=True)
-    s = s.values
-    print(s)
-    p = 6
+    correlation_matrix = pd.read_csv('../TestData/DempsterExample/data.csv',
+                                     dtype={i: float for i in range(6)},
+                                     delimiter=';',
+                                     names=[i for i in range(6)],
+                                     skipinitialspace=True)
+    correlation_matrix = correlation_matrix.values
+    p = correlation_matrix.shape[0]
+    for i in range(p):
+        for j in range(i):
+            correlation_matrix[i, j] = correlation_matrix[j, i]
+    print(correlation_matrix)
     '''
     p = int(input())
     s = np.zeros(shape=(p, p))
@@ -101,47 +102,58 @@ def main():
             s[i, j] = cur[j]
         '''
 
-    alpha = 0.05
+    alpha = 0.5
 
-    sigma = np.identity(p)
-    a = set()
+    corr_estimation = np.identity(p)
+    processed = set()
     for i in range(p):
-        a.add((i, i))
+        processed.add((i, i))
 
-    g1 = float('inf')
-    l0 = l(sigma)
-    print(l0)
-    while g1 >= alpha:
-        g0 = 0
+    cur_delta = float('inf')
+    base_likelihood = calc_likelihood(corr_estimation)
+    print(base_likelihood)
+    k = 0
+    while cur_delta >= alpha / (p * (p - 1) / 2 - k):
+        k += 1
+        max_delta = 0
         best_edge = None
         for i in range(p):
             for j in range(i, p):
-                if (i, j) in a:
+                if (i, j) in processed:
                     continue
-                a1 = copy.deepcopy(a)
-                a1.add((i, j))
-                # a1.add((3, 4))
-                new_sigma = calc_sigma(a1, sigma, s)
-                l1 = l(new_sigma)
-                print(new_sigma)
-                print(l1)
-                g1 = l1 - l0
-                if g1 > g0:
+
+                cur_processed = copy.deepcopy(processed)
+                cur_processed.add((i, j))
+                new_corr_estimation = calc_next_estimation(cur_processed, corr_estimation, correlation_matrix)
+                cur_likelihood = calc_likelihood(new_corr_estimation)
+                cur_delta = cur_likelihood - base_likelihood
+                # if i == 3 and j == 4:
+                # print(cur_delta)
+                if cur_delta > max_delta:
                     best_edge = (i, j)
-                    g0 = g1
-        print(best_edge)
+                    max_delta = cur_delta
         if best_edge is None:
             break
 
-        a.add(best_edge)
-        sigma = calc_sigma(a, sigma, s)
+        print(best_edge)
+        processed.add(best_edge)
+        corr_estimation = calc_next_estimation(processed, corr_estimation, correlation_matrix)
 
-        l1 = l(sigma)
-        g1 = l1 - l0
-        l0 = l1
-    print(a)
+        cur_likelihood = calc_likelihood(corr_estimation)
+        cur_delta = cur_likelihood - base_likelihood
+        base_likelihood = cur_likelihood
+
+    print(processed)
+    print(corr_estimation)
+    for i in range(p):
+        for j in range(i):
+            corr_estimation[i, j] = corr_estimation[j, i]
+    inverted = np.linalg.inv(corr_estimation)
+    for i in inverted:
+        for j in i:
+            print('%.4f' % j, end=' ')
+        print()
 
 
 if __name__ == '__main__':
     main()
-

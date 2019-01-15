@@ -14,7 +14,12 @@ def calc_likelihood(sigma: np.ndarray) -> float:
     #     for j in range(i):
     #         sigma[i, j] = sigma[j, i]
 
-    return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
+    try:
+        return -p / 2 * log(2 * pi) - 1 / 2 * log(np.linalg.det(sigma)) - p / 2
+    except ValueError:
+        print(log(np.linalg.det(sigma)))
+        print(sigma)
+        raise
 
 
 def get_sigma(ind: Tuple[int, int], s: np.ndarray, a: Set[Tuple[int, int]]) -> float:
@@ -97,7 +102,7 @@ def main():
             s[i, j] = cur[j]
         '''
 
-    alpha = 0.03
+    alpha = 0.05
 
     corr_estimation = np.identity(p)
     processed = set()
@@ -106,7 +111,10 @@ def main():
 
     cur_delta = float('inf')
     base_likelihood = calc_likelihood(corr_estimation)
-    while cur_delta >= alpha:
+    print(base_likelihood)
+    k = 0
+    while cur_delta >= alpha / (p * (p - 1) / 2 - k):
+        k += 1
         max_delta = 0
         best_edge = None
         for i in range(p):
@@ -118,7 +126,7 @@ def main():
                 cur_processed.add((i, j))
                 new_corr_estimation = calc_next_estimation(cur_processed, corr_estimation, correlation_matrix)
                 cur_likelihood = calc_likelihood(new_corr_estimation)
-                cur_delta = abs(cur_likelihood - base_likelihood)
+                cur_delta = cur_likelihood - base_likelihood
                 # if i == 3 and j == 4:
                 print(cur_delta)
                 if cur_delta > max_delta:
@@ -131,7 +139,7 @@ def main():
         corr_estimation = calc_next_estimation(processed, corr_estimation, correlation_matrix)
 
         cur_likelihood = calc_likelihood(corr_estimation)
-        cur_delta = abs(cur_likelihood - base_likelihood)
+        cur_delta = cur_likelihood - base_likelihood
         base_likelihood = cur_likelihood
 
     print(processed)

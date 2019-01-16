@@ -1,2 +1,2 @@
-# Dempster's algorithm
-Realisation of Dempster's covariance selection algorithm.
+# Dempster algorithm
+Realisation of Dempster covariance selection algorithm.

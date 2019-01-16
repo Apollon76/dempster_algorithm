@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from dempster_algorithm import calculate
+from covariance_selection_algorithm import calculate
 
 
 def get_data_and_expected(name: str) -> Tuple[np.ndarray, np.ndarray]:

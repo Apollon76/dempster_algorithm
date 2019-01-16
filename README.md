@@ -1,2 +1,2 @@
 # Dempster algorithm
-Prototype for Dempster algorithm.
+Realisation of Dempster's covariance selection algorithm.

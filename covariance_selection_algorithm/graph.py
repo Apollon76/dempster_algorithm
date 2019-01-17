@@ -3,7 +3,7 @@ from typing import List
 
 class Graph:
     def __init__(self, n: int):
-        self.__edges = [[] for i in range(n)]
+        self.__edges = [[] for _ in range(n)]
 
     def add_edge(self, v: int, u: int, cost: float):
         self.__edges[v].append((u, cost))

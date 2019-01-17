@@ -17,11 +17,14 @@ def estimation_by_processed(processed: Set[Tuple[int, int]],
             continue
         g.add_edge(v, u, correlation_matrix[v, u])
 
+    dists = [0] * p
+    g.set_dists(1, dists, -1, 1)
+
     result = np.zeros((p, p))
     for i in range(p):
         dists = [0] * p
-        dists[i] = 1
-        g.set_dists(i, dists)
+        g.set_dists(i, dists, -1, 1)
+        print(dists)
         for j in range(p):
             result[i, j] = dists[j]
 
@@ -39,11 +42,11 @@ def calculate_with_modification(correlation_matrix: np.ndarray,
     edges = []
     for i in range(p):
         for j in range(i + 1, p):
-            edges.append((correlation_matrix[i, j], (i, j)))
+            edges.append((abs(correlation_matrix[i, j]), (i, j)))
     edges.sort(reverse=True)
 
     s = DSU(p)
-    for value, edge in edges:
+    for _, edge in edges:
         v, u = edge
         if s.get_parent(v) != s.get_parent(u):
             s.merge(v, u)

@@ -88,7 +88,7 @@ def get_corr_estimation(cur_estimation: np.ndarray,
 
     cur_delta = float('inf')
     base_likelihood = calc_likelihood(corr_estimation)
-    k = 0
+    k = len(processed) - p
     while cur_delta >= significance_level / (p * (p - 1) / 2 - k):
         k += 1
         max_delta = 0

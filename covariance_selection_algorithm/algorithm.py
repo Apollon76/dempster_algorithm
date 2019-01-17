@@ -1,5 +1,5 @@
 import copy
-from typing import Set, Tuple
+from typing import Set, Tuple, Optional
 from math import log, pi
 
 import pandas as pd
@@ -79,17 +79,16 @@ def calc_next_estimation(edges: Set[Tuple[int, int]], sigma: np.ndarray, s: np.n
     return sigma
 
 
-def calculate(correlation_matrix: np.array, significance_level: float) -> np.array:
+def get_corr_estimation(cur_estimation: np.ndarray,
+                        processed: Set[Tuple[int, int]],
+                        correlation_matrix: np.ndarray,
+                        significance_level: float):
     p = correlation_matrix.shape[0]
-
-    corr_estimation = np.identity(p)
-    processed = set()
-    for i in range(p):
-        processed.add((i, i))
+    corr_estimation = cur_estimation.copy()
 
     cur_delta = float('inf')
     base_likelihood = calc_likelihood(corr_estimation)
-    k = 0
+    k = len(processed) - p
     while cur_delta >= significance_level / (p * (p - 1) / 2 - k):
         k += 1
         max_delta = 0
@@ -119,3 +118,20 @@ def calculate(correlation_matrix: np.array, significance_level: float) -> np.arr
 
     return corr_estimation
 
+
+def calculate(correlation_matrix: np.ndarray,
+              significance_level: float,
+              processed: Optional[Set[Tuple[int, int]]] = None) -> np.ndarray:
+    p = correlation_matrix.shape[0]
+
+    if not processed:
+        processed = set()
+    for i in range(p):
+        processed.add((i, i))
+
+    return get_corr_estimation(
+        np.identity(p),
+        processed,
+        correlation_matrix,
+        significance_level
+    )

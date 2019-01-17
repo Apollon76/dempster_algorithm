@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from covariance_selection_algorithm import calculate
+from covariance_selection_algorithm import calculate, calculate_with_modification
 
 
 def read_csv(path: str, size: int):
@@ -38,8 +38,20 @@ class TestCalculate:
             get_data_and_expected('dempsters_example'),
         ]
     )
-    def test_dempsters_example(self,
+    def test_dempster_example(self,
+                              correlation_matrix: np.ndarray,
+                              expected: np.ndarray):
+        actual = calculate(correlation_matrix, 0.5)
+        assert np.allclose(expected, actual, atol=1e-4)
+
+    @pytest.mark.parametrize(
+        "correlation_matrix,expected",
+        [
+            get_data_and_expected('dempsters_example'),
+        ]
+    )
+    def test_dempster_modified(self,
                                correlation_matrix: np.ndarray,
                                expected: np.ndarray):
-        actual = calculate(correlation_matrix, 0.5)
+        actual = calculate_with_modification(correlation_matrix, 0.5)
         assert np.allclose(expected, actual, atol=1e-4)

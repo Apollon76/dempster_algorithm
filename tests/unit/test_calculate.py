@@ -10,23 +10,23 @@ import pytest
 from covariance_selection_algorithm import calculate
 
 
+def read_csv(path: str, size: int):
+    return pd.read_csv(path,
+                       dtype={i: float for i in range(size)},
+                       delimiter=';',
+                       names=[i for i in range(size)],
+                       skipinitialspace=True).values
+
+
 def get_data_and_expected(name: str) -> Tuple[np.ndarray, np.ndarray]:
     cur_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    correlation_matrix = pd.read_csv(cur_path.joinpath(f'../fixtures/{name}/data.csv'),
-                                     dtype={i: float for i in range(6)},
-                                     delimiter=';',
-                                     names=[i for i in range(6)],
-                                     skipinitialspace=True).values
+    matrix_size = 6
+    correlation_matrix = read_csv(cur_path.joinpath(f'../fixtures/{name}/data.csv'), matrix_size)
     p = correlation_matrix.shape[0]
     for i in range(p):
         for j in range(i):
             correlation_matrix[i, j] = correlation_matrix[j, i]
-
-    expected = pd.read_csv(cur_path.joinpath(f'../fixtures/{name}/expected.csv'),
-                           dtype={i: float for i in range(6)},
-                           delimiter=';',
-                           names=[i for i in range(6)],
-                           skipinitialspace=True).values
+    expected = read_csv(cur_path.joinpath(f'../fixtures/{name}/expected.csv'), matrix_size)
 
     return correlation_matrix, expected
 

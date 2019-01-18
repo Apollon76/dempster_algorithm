@@ -2,7 +2,7 @@ from typing import Set, Tuple
 
 import numpy as np
 
-from covariance_selection_algorithm.algorithm import calculate, get_corr_estimation
+from covariance_selection_algorithm.algorithm import get_corr_estimation
 from covariance_selection_algorithm.dsu import DSU
 from covariance_selection_algorithm.graph import Graph
 

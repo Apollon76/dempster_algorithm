@@ -24,7 +24,6 @@ def estimation_by_processed(processed: Set[Tuple[int, int]],
     for i in range(p):
         dists = [0] * p
         g.set_dists(i, dists, -1, 1)
-        # print(dists)
         for j in range(p):
             result[i, j] = dists[j]
 
